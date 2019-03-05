@@ -104,7 +104,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"radius/main.js":[function(require,module,exports) {
+})({"oval/main.js":[function(require,module,exports) {
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -116,10 +116,8 @@ var ctx = canvas.getContext('2d');
 var env = {
   width: window.innerWidth,
   height: window.innerHeight,
-  hue: 120,
-  lines: [],
-  cx: window.innerWidth / 2,
-  cy: window.innerHeight / 2
+  particles: [],
+  hue: 0
 };
 
 function random(min, max) {
@@ -127,55 +125,44 @@ function random(min, max) {
 }
 
 function deg(o) {
-  return Math.PI * o / 180;
+  return o * Math.PI / 180;
 }
 
-function distance(x1, y1, x2, y2) {
-  var disX = x1 - x2;
-  var disY = y1 - y2;
-  return Math.sqrt(Math.pow(disX, 2) + Math.pow(disY, 2));
+function distance() {// body...
 }
 
-var Line =
+var Particle =
 /*#__PURE__*/
 function () {
-  function Line() {
-    _classCallCheck(this, Line);
+  function Particle() {
+    _classCallCheck(this, Particle);
 
+    this.cx = env.width / 2;
+    this.cy = env.height / 2;
+    this.rx = random(100, 300);
+    this.ry = random(30, 100);
     this.angle = random(0, 360);
-    this.radius = random(1, 10);
-    this.v = random(1, 10);
-    this.r = random(10, env.width / 2);
-    this.x = Math.cos(deg(this.angle)) * this.r;
-    this.y = Math.sin(deg(this.angle)) * this.r;
-    this.coords = new Array(3).fill([this.x, this.y]);
+    this.x = Math.cos(deg(this.angle)) * this.rx + this.cx;
+    this.y = Math.sin(deg(this.angle)) * this.ry + this.cy;
+    this.v = random(1, 3);
+    this.coords = new Array(5).fill([this.x, this.y]);
   }
 
-  _createClass(Line, [{
+  _createClass(Particle, [{
     key: "update",
     value: function update() {
-      //10 is to fix the range
-      if (distance(this.x, this.y, env.cx, env.cy) > this.r + 10) {
-        var angle = Math.atan2(env.cy - this.y, env.cx - this.x);
-        this.x += this.v * Math.cos(angle);
-        this.y += this.v * Math.sin(angle);
-      } else {
-        this.angle += this.v;
-        this.x = Math.cos(deg(this.angle)) * this.r + env.cx;
-        this.y = Math.sin(deg(this.angle)) * this.r + env.cy;
-      }
-
+      this.angle += 1;
+      this.x = Math.cos(deg(this.angle)) * this.rx + this.cx;
+      this.y = Math.sin(deg(this.angle)) * this.ry + this.cy;
       this.coords.unshift([this.x, this.y]);
       this.coords.pop();
     }
   }, {
     key: "draw",
     value: function draw() {
-      ctx.strokeStyle = "red";
-      ctx.lineCap = "round";
-      ctx.lineWidth = this.radius;
-      ctx.beginPath();
       var end = this.coords.length - 1;
+      ctx.strokeStyle = "hsl(".concat(env.hue, ",100%, 70%)");
+      ctx.beginPath();
       ctx.moveTo(this.coords[end][0], this.coords[end][1]);
       ctx.lineTo(this.x, this.y);
       ctx.stroke();
@@ -183,39 +170,28 @@ function () {
     }
   }]);
 
-  return Line;
+  return Particle;
 }();
 
-function init() {
+function init(argument) {
+  for (var i = 0; i < 1000; i++) {
+    env.particles.push(new Particle());
+  }
+
   canvas.width = env.width;
   canvas.height = env.height;
 
-  for (var i = 0; i < 100; i++) {
-    env.lines.push(new Line({
-      cx: env.width / 2,
-      cy: env.height / 2
-    }));
-  }
-
-  function bind() {
-    document.addEventListener('mousedown', function (e) {
-      env.cx = e.pageX;
-      env.cy = e.pageY;
-    });
-  }
-
-  function animate() {
+  function draw() {
     env.hue += .5;
-    ctx.fillStyle = "rgba(0,0,0,.2";
+    requestAnimationFrame(draw);
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, env.width, env.height);
-    env.lines.forEach(function (line) {
-      return line.draw();
+    env.particles.forEach(function (particle) {
+      return particle.draw();
     });
-    requestAnimationFrame(animate);
   }
 
-  bind();
-  animate();
+  draw();
 }
 
 init();
@@ -388,5 +364,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","radius/main.js"], null)
-//# sourceMappingURL=/main.c564acbb.map
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","oval/main.js"], null)
+//# sourceMappingURL=/main.0d961c16.map

@@ -104,7 +104,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"radius/main.js":[function(require,module,exports) {
+})({"demo4/main.js":[function(require,module,exports) {
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -116,18 +116,15 @@ var ctx = canvas.getContext('2d');
 var env = {
   width: window.innerWidth,
   height: window.innerHeight,
-  hue: 120,
-  lines: [],
+  hue: 0,
+  particles: [],
   cx: window.innerWidth / 2,
-  cy: window.innerHeight / 2
+  cy: window.innerHeight / 2,
+  bg: null
 };
 
 function random(min, max) {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
-function deg(o) {
-  return Math.PI * o / 180;
+  return Math.floor(min + Math.random() * (max - min));
 }
 
 function distance(x1, y1, x2, y2) {
@@ -136,89 +133,103 @@ function distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(disX, 2) + Math.pow(disY, 2));
 }
 
-var Line =
+function deg(o) {
+  return Math.PI * o / 180;
+}
+
+var Particle =
 /*#__PURE__*/
 function () {
-  function Line() {
-    _classCallCheck(this, Line);
+  function Particle(_ref) {
+    var x = _ref.x,
+        y = _ref.y;
 
-    this.angle = random(0, 360);
-    this.radius = random(1, 10);
-    this.v = random(1, 10);
-    this.r = random(10, env.width / 2);
-    this.x = Math.cos(deg(this.angle)) * this.r;
-    this.y = Math.sin(deg(this.angle)) * this.r;
-    this.coords = new Array(3).fill([this.x, this.y]);
+    _classCallCheck(this, Particle);
+
+    this.cx = env.cx;
+    this.cy = env.cy;
+
+    if (x && y) {
+      this.angle = Math.atan2(y - this.cy, x - this.cx) * 180 / Math.PI;
+      this.r = distance(x, y, this.cx, this.cy);
+      this.x = x;
+      this.y = y;
+    } else {
+      this.angle = random(0, 360);
+      this.r = random(3, env.width / 2);
+      this.x = this.cx + Math.cos(deg(this.angle)) * this.r;
+      this.y = this.cy + Math.sin(deg(this.angle)) * this.r;
+    }
+
+    this.v = random(.5, 1.2);
+    this.coords = new Array(5).fill([this.x, this.y]);
   }
 
-  _createClass(Line, [{
+  _createClass(Particle, [{
     key: "update",
     value: function update() {
-      //10 is to fix the range
-      if (distance(this.x, this.y, env.cx, env.cy) > this.r + 10) {
-        var angle = Math.atan2(env.cy - this.y, env.cx - this.x);
-        this.x += this.v * Math.cos(angle);
-        this.y += this.v * Math.sin(angle);
-      } else {
-        this.angle += this.v;
-        this.x = Math.cos(deg(this.angle)) * this.r + env.cx;
-        this.y = Math.sin(deg(this.angle)) * this.r + env.cy;
-      }
-
-      this.coords.unshift([this.x, this.y]);
+      this.angle += this.v;
+      this.x = this.cx + Math.cos(deg(this.angle)) * this.r;
+      this.y = this.cy + Math.sin(deg(this.angle)) * this.r;
       this.coords.pop();
+      this.coords.unshift([this.x, this.y]);
     }
   }, {
     key: "draw",
     value: function draw() {
-      ctx.strokeStyle = "red";
-      ctx.lineCap = "round";
-      ctx.lineWidth = this.radius;
+      var lastPoint = this.coords[this.coords.length - 1];
       ctx.beginPath();
-      var end = this.coords.length - 1;
-      ctx.moveTo(this.coords[end][0], this.coords[end][1]);
+      ctx.moveTo(lastPoint[0], lastPoint[1]);
       ctx.lineTo(this.x, this.y);
       ctx.stroke();
       this.update();
     }
   }]);
 
-  return Line;
+  return Particle;
 }();
 
-function init() {
+(function init() {
   canvas.width = env.width;
   canvas.height = env.height;
+  env.bg = ctx.createRadialGradient(env.width / 2, env.height / 2, 0, env.width / 2, env.height / 2, env.width / 2);
+  env.bg.addColorStop(0, "red");
+  env.bg.addColorStop(1, "blue");
 
-  for (var i = 0; i < 100; i++) {
-    env.lines.push(new Line({
-      cx: env.width / 2,
-      cy: env.height / 2
-    }));
+  for (var i = 0; i < 5; i++) {
+    env.particles.push(new Particle({}));
   }
 
   function bind() {
     document.addEventListener('mousedown', function (e) {
-      env.cx = e.pageX;
-      env.cy = e.pageY;
+      function fn(e) {
+        env.particles.push(new Particle({
+          x: e.pageX,
+          y: e.pageY
+        }));
+      }
+
+      document.addEventListener('mousemove', fn);
+      document.addEventListener('mouseup', function () {
+        document.removeEventListener('mousemove', fn);
+      });
     });
   }
 
-  function animate() {
-    env.hue += .5;
-    ctx.fillStyle = "rgba(0,0,0,.2";
+  function animate(argument) {
+    ctx.fillStyle = "rgba(0,0,0, .15)";
+    ctx.strokeStyle = env.bg;
     ctx.fillRect(0, 0, env.width, env.height);
-    env.lines.forEach(function (line) {
-      return line.draw();
+    env.hue += .5;
+    env.particles.forEach(function (particle) {
+      return particle.draw();
     });
     requestAnimationFrame(animate);
   }
 
   bind();
   animate();
-}
-
-init();
+})();
 },{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -388,5 +399,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","radius/main.js"], null)
-//# sourceMappingURL=/main.c564acbb.map
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","demo4/main.js"], null)
+//# sourceMappingURL=/main.f63621bc.map
