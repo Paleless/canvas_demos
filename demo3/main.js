@@ -59,30 +59,23 @@ class Target {
 
 class Point {
     constructor({ x: tx, y: ty }) {
-        this.sx = random(0, env.width)
-        this.sy = random(0, env.height)
-        this.x = this.sx
-        this.y = this.sy
+        this.x = random(0, env.width)
+        this.y = random(0, env.height)
         this.tx = tx
         this.ty = ty
-        this.angle = Math.atan2(ty - this.sy, tx - this.sx)
-        this.dis = distance(this.sx, this.sy, tx, ty)
-        this.disTra = 0
-        this.a = .1
-        this.v = 0
+        this.angle = random(0, 360)
+        this.r = distance(this.x, this.y, tx, ty)
+        this.a = 0
+        this.v = .3
         this.coords = new Array(2).fill([this.x, this.y])
     }
     update() {
-        if (this.disTra > this.dis) {
-            this.v -= this.a
-        } else {
-            this.v += this.a
-        }
-        this.x += Math.cos(this.angle) * this.v
-        this.y += Math.sin(this.angle) * this.v
+        this.y = Math.sin(deg(this.angle)) * this.r + this.ty
+        this.x = Math.cos(deg(this.angle)) * this.r + this.tx
+        this.v += this.a
+        this.angle += this.v
         this.coords.pop()
         this.coords.unshift([this.x, this.y])
-        this.disTra = distance(this.sx, this.sy, this.x, this.y)
     }
     draw() {
         ctx.strokeStyle = `hsl(${env.hue},100%,60%)`
@@ -118,7 +111,7 @@ function init() {
         x: env.width / 2,
         y: env.height / 2
     })
-    for (let i = 0; i < 800; i++) {
+    for (let i = 0; i < 500; i++) {
         points.push(new Point(targetPoint))
     }
     draw()

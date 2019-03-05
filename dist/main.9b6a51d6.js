@@ -104,74 +104,203 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
+})({"collision/main.js":[function(require,module,exports) {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var canvas = document.querySelector('canvas');
+var ctx = canvas.getContext('2d');
+var env = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  hue: 120,
+  circles: []
+};
+
+function resolveCollision(circle1, circle2) {
+  function resolveV1(v1, v2, m1, m2) {
+    return ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2);
   }
 
-  return bundleURL;
-}
+  function resolveV2(v1, v2, m1, m2) {
+    return (2 * m1 * v1 + (m2 - m1) * v2) / (m1 + m2);
+  }
 
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
+  function fixPostion(circle1, circle2) {
+    var x1 = circle1.x,
+        y1 = circle1.y,
+        r1 = circle1.r;
+    var x2 = circle2.x,
+        y2 = circle2.y,
+        r2 = circle2.r;
+    var disX = Math.abs(x2 - x1);
+    var disY = Math.abs(y2 - y1);
+    var disL = r2 + r1;
+    var angle = Math.atan2(disY, disX);
 
-    if (matches) {
-      return getBaseURL(matches[0]);
+    if (x1 < x2) {
+      circle1.x = circle2.x - Math.cos(angle) * disL;
+    } else {
+      circle2.x = circle1.x - Math.cos(angle) * disL;
+    }
+
+    if (y1 < y2) {
+      circle1.y = circle2.y - Math.sin(angle) * disL;
+    } else {
+      circle2.y = circle1.y - Math.sin(angle) * disL;
     }
   }
 
-  return '/';
+  var m1 = circle1.m,
+      vx1 = circle1.vx,
+      vy1 = circle1.vy;
+  var m2 = circle2.m,
+      vx2 = circle2.vx,
+      vy2 = circle2.vy;
+  circle1.vx = resolveV1(vx1, vx2, m1, m2);
+  circle2.vx = resolveV2(vx1, vx2, m1, m2);
+  circle1.vy = resolveV1(vy1, vy2, m1, m2);
+  circle2.vy = resolveV2(vy1, vy2, m1, m2);
+  fixPostion(circle1, circle2);
 }
 
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
+function predicateCollision(circle1, circle2) {
+  var x1 = circle1.x,
+      y1 = circle1.y,
+      r1 = circle1.r;
+  var x2 = circle2.x,
+      y2 = circle2.y,
+      r2 = circle2.r;
+  var dis = distance(x1, y1, x2, y2);
+  return dis <= r1 + r2;
 }
 
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
+function random(min, max) {
+  return Math.floor((max - min) * Math.random() + min);
 }
 
-var cssTimeout = null;
+function distance(x1, y1, x2, y2) {
+  var disX = x1 - x2;
+  var disY = y1 - y2;
+  return Math.sqrt(Math.pow(disX, 2) + Math.pow(disY, 2));
+}
 
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
+function deg(o) {
+  return Math.PI * o / 180;
+}
+
+var Circle =
+/*#__PURE__*/
+function () {
+  function Circle(_ref) {
+    var x = _ref.x,
+        y = _ref.y;
+
+    _classCallCheck(this, Circle);
+
+    this.x = x;
+    this.y = y;
+    this.vx = random(1, 5);
+    this.vy = random(1, 5);
+    this.r = 10;
+    this.m = 1;
   }
 
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
+  _createClass(Circle, [{
+    key: "update",
+    value: function update() {
+      var _this = this;
 
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
+      this.x += this.vx;
+      this.y += this.vy;
+      env.circles.forEach(function (circle) {
+        if (_this === circle) {
+          return;
+        }
+
+        if (predicateCollision(_this, circle)) {
+          resolveCollision(_this, circle);
+        }
+      });
+
+      if (this.x - this.r < 0 || this.x + this.r > env.width) {
+        this.vx = -this.vx;
+
+        if (this.x < this.r) {
+          this.x = this.r;
+        } else {
+          this.x = env.width - this.r;
+        }
+      }
+
+      if (this.y - this.r < 0 || this.y + this.r > env.height) {
+        this.vy = -this.vy;
+
+        if (this.y < this.r) {
+          this.y = this.r;
+        } else {
+          this.y = env.height - this.r;
+        }
       }
     }
+  }, {
+    key: "draw",
+    value: function draw() {
+      this.update();
+      ctx.strokeStyle = "hsl(".concat(env.hue, ",100%, 80%)");
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, deg(360));
+      ctx.stroke();
+    }
+  }]);
 
-    cssTimeout = null;
-  }, 50);
+  return Circle;
+}();
+
+function init() {
+  canvas.width = env.width;
+  canvas.height = env.height;
+
+  var _loop = function _loop(i) {
+    var x = random(0, env.width);
+    var y = random(0, env.width);
+    env.circles.forEach(function (circle) {
+      while (predicateCollision(circle, {
+        x: x,
+        y: y,
+        r: 10
+      }) || x < 10 || y < 10 || x + 10 > env.width || y + 10 > env.height) {
+        x = random(0, env.width);
+        y = random(0, env.height);
+      }
+    });
+    env.circles.push(new Circle({
+      x: x,
+      y: y
+    }));
+  };
+
+  for (var i = 0; i < 100; i++) {
+    _loop(i);
+  }
+
+  function draw() {
+    env.hue += .5;
+    ctx.clearRect(0, 0, env.width, env.height);
+    env.circles.forEach(function (circle) {
+      return circle.draw();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  draw();
 }
 
-module.exports = reloadCSS;
-},{"./bundle-url":"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+init();
+},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -340,4 +469,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js"], null)
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","collision/main.js"], null)
+//# sourceMappingURL=/main.9b6a51d6.map

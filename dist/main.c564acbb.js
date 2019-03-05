@@ -104,74 +104,122 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
+})({"radius/main.js":[function(require,module,exports) {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var canvas = document.querySelector('canvas');
+var ctx = canvas.getContext('2d');
+var env = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  hue: 120,
+  lines: [],
+  cx: window.innerWidth / 2,
+  cy: window.innerHeight / 2
+};
+
+function random(min, max) {
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+function deg(o) {
+  return Math.PI * o / 180;
+}
+
+function distance(x1, y1, x2, y2) {
+  var disX = x1 - x2;
+  var disY = y1 - y2;
+  return Math.sqrt(Math.pow(disX, 2) + Math.pow(disY, 2));
+}
+
+var Line =
+/*#__PURE__*/
+function () {
+  function Line() {
+    _classCallCheck(this, Line);
+
+    this.angle = random(0, 360);
+    this.radius = random(1, 10);
+    this.v = random(1, 10);
+    this.r = random(10, env.width / 2);
+    this.x = Math.cos(deg(this.angle)) * this.r;
+    this.y = Math.sin(deg(this.angle)) * this.r;
+    this.coords = new Array(3).fill([this.x, this.y]);
   }
 
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
+  _createClass(Line, [{
+    key: "update",
+    value: function update() {
+      //10 is to fix the range
+      if (distance(this.x, this.y, env.cx, env.cy) > this.r + 10) {
+        var angle = Math.atan2(env.cy - this.y, env.cx - this.x);
+        this.x += this.v * Math.cos(angle);
+        this.y += this.v * Math.sin(angle);
+      } else {
+        this.angle += this.v;
+        this.x = Math.cos(deg(this.angle)) * this.r + env.cx;
+        this.y = Math.sin(deg(this.angle)) * this.r + env.cy;
       }
-    }
 
-    cssTimeout = null;
-  }, 50);
+      this.coords.unshift([this.x, this.y]);
+      this.coords.pop();
+    }
+  }, {
+    key: "draw",
+    value: function draw() {
+      ctx.strokeStyle = "red";
+      ctx.lineCap = "round";
+      ctx.lineWidth = this.radius;
+      ctx.beginPath();
+      var end = this.coords.length - 1;
+      ctx.moveTo(this.coords[end][0], this.coords[end][1]);
+      ctx.lineTo(this.x, this.y);
+      ctx.stroke();
+      this.update();
+    }
+  }]);
+
+  return Line;
+}();
+
+function init() {
+  canvas.width = env.width;
+  canvas.height = env.height;
+
+  for (var i = 0; i < 100; i++) {
+    env.lines.push(new Line({
+      cx: env.width / 2,
+      cy: env.height / 2
+    }));
+  }
+
+  function bind() {
+    document.addEventListener('mousedown', function (e) {
+      env.cx = e.pageX;
+      env.cy = e.pageY;
+    });
+  }
+
+  function animate() {
+    env.hue += .5;
+    ctx.fillStyle = "rgba(0,0,0,.2";
+    ctx.fillRect(0, 0, env.width, env.height);
+    env.lines.forEach(function (line) {
+      return line.draw();
+    });
+    requestAnimationFrame(animate);
+  }
+
+  bind();
+  animate();
 }
 
-module.exports = reloadCSS;
-},{"./bundle-url":"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+init();
+},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -340,4 +388,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js"], null)
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","radius/main.js"], null)
+//# sourceMappingURL=/main.c564acbb.map
