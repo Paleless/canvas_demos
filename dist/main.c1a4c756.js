@@ -104,74 +104,136 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
+})({"text/main.js":[function(require,module,exports) {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+//utils
+function deg(o) {
+  return Math.PI * o / 180;
+}
+
+function rDeg(deg) {
+  return deg * 180 / Math.PI;
+}
+
+function random(min, max) {
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+function distance(x1, y1, x2, y2) {
+  var disX = x1 - x2;
+  var disY = y1 - y2;
+  return Math.sqrt(Math.pow(disX, 2), Math.pow(disY, 2));
+} //game
+
+
+var canvas = document.querySelector('canvas');
+var ctx = canvas.getContext('2d');
+var env = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  hue: 120
+};
+
+function createText(text, env) {
+  var textCanvas = document.createElement('canvas');
+  var textCtx = textCanvas.getContext('2d');
+  textCanvas.width = env.width;
+  textCanvas.height = env.height;
+  textCtx.fillStyle = "#fff";
+  textCtx.font = '200px arrial';
+  textCtx.fillText(text, 0, 300);
+  var imageData = textCtx.getImageData(0, 0, env.width, env.height);
+  return imageData;
+}
+
+var Dot =
+/*#__PURE__*/
+function () {
+  function Dot(_ref) {
+    var tx = _ref.tx,
+        ty = _ref.ty;
+
+    _classCallCheck(this, Dot);
+
+    this.tx = tx;
+    this.ty = ty;
+    this.sx = random(0, env.width);
+    this.sy = random(0, env.height);
+    this.x = this.sx;
+    this.y = this.sy;
+    this.dis = distance(this.x, this.y, tx, ty);
+    this.tra = 0;
+    this.angle = Math.atan2(ty - this.y, tx - this.x);
+    this.v = 1;
   }
 
-  return bundleURL;
-}
+  _createClass(Dot, [{
+    key: "update",
+    value: function update() {
+      this.x += Math.cos(this.angle) * this.v;
+      this.y += Math.sin(this.angle) * this.v;
+      this.tra = distance(this.sx, this.sy, this.x, this.y);
 
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
+      if (this.tra > this.dis) {
+        this.v = 0;
       }
     }
+  }, {
+    key: "draw",
+    value: function draw() {
+      ctx.fillStyle = "hsl(".concat(env.hue, ",100%,80%)");
+      ctx.beginPath();
+      ctx.fillRect(this.x, this.y, 3, 3);
+      this.update();
+    }
+  }]);
 
-    cssTimeout = null;
-  }, 50);
-}
+  return Dot;
+}();
 
-module.exports = reloadCSS;
-},{"./bundle-url":"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+(function init(env) {
+  canvas.width = env.width;
+  canvas.height = env.height;
+
+  var _createText = createText("Hello World", env),
+      w = _createText.width,
+      h = _createText.height,
+      nodes = _createText.data;
+
+  var dots = [];
+
+  for (var y = 0; y < h; y += 10) {
+    for (var x = 0; x < w; x += 10) {
+      var index = (x + y * w) * 4 + 3;
+      var pixel = nodes[index];
+
+      if (pixel === 255) {
+        dots.push(new Dot({
+          tx: x,
+          ty: y
+        }));
+      }
+    }
+  }
+
+  function draw() {
+    env.hue += 1.5;
+    ctx.fillStyle = "rgba(0,0,0,.2)";
+    ctx.fillRect(0, 0, env.width, env.height);
+    dots.forEach(function (dot) {
+      return dot.draw();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})(env);
+},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -340,4 +402,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js"], null)
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","text/main.js"], null)
+//# sourceMappingURL=/main.c1a4c756.map
