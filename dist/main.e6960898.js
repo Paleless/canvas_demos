@@ -104,98 +104,222 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   // Override the current require with this new one
   return newRequire;
-})({"oval/main.js":[function(require,module,exports) {
+})({"utils/game.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var canvas = document.querySelector('canvas');
-var ctx = canvas.getContext('2d');
-var env = {
-  width: window.innerWidth,
-  height: window.innerHeight,
-  particles: [],
-  hue: 0
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+//(obj, obj) 
+//将fnObj的属性复制给obj
+function mountProtos(fnObj, obj) {
+  Object.keys(fnObj).forEach(function (key) {
+    obj[key] = fnObj[key];
+  });
+}
+
+var utils = {
+  //角度转弧度
+  deg: function deg(o) {
+    return Math.PI * o / 180;
+  },
+  //弧度转角度
+  rDeg: function rDeg(deg) {
+    return deg * 180 / Math.PI;
+  },
+  //随机数
+  random: function random(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+  },
+  //两点距离
+  distance: function distance(_ref, _ref2) {
+    var _ref3 = _slicedToArray(_ref, 2),
+        x1 = _ref3[0],
+        y1 = _ref3[1];
+
+    var _ref4 = _slicedToArray(_ref2, 2),
+        x2 = _ref4[0],
+        y2 = _ref4[1];
+
+    var disX = x1 - x2;
+    var disY = y1 - y2;
+    return Math.sqrt(Math.pow(disX, 2), Math.pow(disY, 2));
+  }
 };
-
-function random(min, max) {
-  return Math.floor(Math.random() * (max - min) + min);
+/*
+option:{
+    canvas: this html canvas element, can be css sleector or html element
+    env: width and height are required to initalize the canvas
+    loop: function to loop
 }
+ */
 
-function deg(o) {
-  return o * Math.PI / 180;
-}
-
-function distance() {// body...
-}
-
-var Particle =
+var Game =
 /*#__PURE__*/
 function () {
-  function Particle() {
-    _classCallCheck(this, Particle);
+  function Game(option) {
+    _classCallCheck(this, Game);
 
-    this.cx = env.width / 2;
-    this.cy = env.height / 2;
-    this.rx = random(100, 300);
-    this.ry = random(30, 100);
-    this.angle = random(0, 360);
-    this.x = Math.cos(deg(this.angle)) * this.rx + this.cx;
-    this.y = Math.sin(deg(this.angle)) * this.ry + this.cy;
-    this.v = random(1, 3);
-    this.coords = new Array(5).fill([this.x, this.y]);
+    //toCheck the option params
+    ["loop", "env"].forEach(function (item) {
+      if (!option[item]) {
+        throw Error("not hava ".concat(item));
+      }
+    });
+    this.canvas = document.querySelector(option.canvas) || document.querySelector('canvas') || option.canvas;
+    this.env = option.env;
+    this.loopFn = option.loop;
+    this.beforeLoop = option.beforeLoop || console.log;
+    this.init();
   }
 
-  _createClass(Particle, [{
-    key: "update",
-    value: function update() {
-      this.angle += 1;
-      this.x = Math.cos(deg(this.angle)) * this.rx + this.cx;
-      this.y = Math.sin(deg(this.angle)) * this.ry + this.cy;
-      this.coords.unshift([this.x, this.y]);
-      this.coords.pop();
+  _createClass(Game, [{
+    key: "init",
+    value: function init() {
+      this.canvas.width = this.env.width;
+      this.canvas.height = this.env.height;
+      this.ctx = this.canvas.getContext('2d');
+      this.loopFn = this.loopFn.bind(this);
+      this.beforeLoop();
+      this.loop();
     }
   }, {
-    key: "draw",
-    value: function draw() {
-      var end = this.coords.length - 1;
-      ctx.strokeStyle = "hsl(".concat(env.hue, ",100%, 70%)");
-      ctx.beginPath();
-      ctx.moveTo(this.coords[end][0], this.coords[end][1]);
-      ctx.lineTo(this.x, this.y);
-      ctx.stroke();
-      this.update();
+    key: "loop",
+    value: function loop() {
+      this.loopFn();
+      requestAnimationFrame(this.loop.bind(this));
     }
   }]);
 
-  return Particle;
+  return Game;
 }();
 
-function init(argument) {
-  for (var i = 0; i < 1000; i++) {
-    env.particles.push(new Particle());
+mountProtos(utils, Game);
+var _default = Game;
+exports.default = _default;
+},{}],"demo6/main.js":[function(require,module,exports) {
+"use strict";
+
+var _game = _interopRequireDefault(require("../utils/game.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Point =
+/*#__PURE__*/
+function () {
+  function Point(_ref) {
+    var ctx = _ref.ctx,
+        x = _ref.x,
+        range = _ref.range;
+
+    _classCallCheck(this, Point);
+
+    this.ctx = ctx;
+    this.x = x;
+    this.y = _game.default.random(100, 200);
+    this.range = range;
   }
 
-  canvas.width = env.width;
-  canvas.height = env.height;
+  _createClass(Point, [{
+    key: "update",
+    value: function update() {
+      this.y += _game.default.random(-10, 10);
 
-  function draw() {
-    env.hue += .5;
-    requestAnimationFrame(draw);
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.fillRect(0, 0, env.width, env.height);
-    env.particles.forEach(function (particle) {
-      return particle.draw();
-    });
+      if (this.y > this.range.max) {
+        this.y = this.range.max;
+      } else if (this.y < this.range.min) {
+        this.y = this.range.min;
+      }
+    }
+  }]);
+
+  return Point;
+}(); // (int, int) -> [x]
+
+
+function splitSpace(len, width) {
+  var spacing = width / len;
+  var xArray = [];
+
+  for (var i = 0; i < len; i++) {
+    xArray.push(spacing * i);
   }
 
-  draw();
+  xArray.push(width);
+  return xArray;
+} // ([Point], ctx) -> effect!
+
+
+function renderWave(points, ctx) {
+  points.forEach(function (point) {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 3, 0, _game.default.deg(360));
+    ctx.fill();
+  });
+  ctx.beginPath();
+  ctx.strokeStyle = "red";
+  ctx.moveTo(points[0].x, points[0].y);
+  points.reduce(function (prevPoint, nextPoint) {
+    var cx = (prevPoint.x + nextPoint.x) / 2;
+    var cy = (prevPoint.y + nextPoint.y) / 2;
+    ctx.quadraticCurveTo(cx, cy, nextPoint.x, nextPoint.y);
+    return nextPoint;
+  });
+  ctx.stroke();
 }
 
-init();
-},{}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+new _game.default({
+  env: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    pointLen: 7,
+    points: [],
+    range: {
+      max: 200,
+      min: 100
+    }
+  },
+  beforeLoop: function beforeLoop() {
+    var _this = this;
+
+    this.env.points = splitSpace(this.env.pointLen, this.env.width).map(function (x) {
+      return new Point({
+        x: x,
+        ctx: _this.ctx,
+        range: _this.env.range
+      });
+    });
+  },
+  loop: function loop() {
+    this.ctx.clearRect(0, 0, this.env.width, this.env.height); // this.env.points.forEach(point => point.update())
+
+    renderWave(this.env.points, this.ctx);
+  }
+});
+},{"../utils/game.js":"utils/game.js"}],"C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -222,7 +346,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50484" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56877" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
@@ -364,5 +488,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","oval/main.js"], null)
-//# sourceMappingURL=/main.0d961c16.map
+},{}]},{},["C:/Program Files/nodejs/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","demo6/main.js"], null)
+//# sourceMappingURL=/main.e6960898.map

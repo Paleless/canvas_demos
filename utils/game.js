@@ -31,13 +31,39 @@ const utils = {
 }
 
 
-
+/*
+option:{
+    canvas: this html canvas element, can be css sleector or html element
+    env: width and height are required to initalize the canvas
+    loop: function to loop
+}
+ */
 class Game {
     constructor(option) {
-
+        //toCheck the option params
+        ["loop", "env"].forEach(item => {
+            if (!option[item]) {
+                throw Error(`not hava ${item}`)
+            }
+        })
+        this.canvas = document.querySelector(option.canvas) || document.querySelector('canvas') || option.canvas
+        this.env = option.env
+        this.loopFn = option.loop
+        this.beforeLoop = option.beforeLoop || console.log
+        this.init()
     }
     init() {
+        this.canvas.width = this.env.width
+        this.canvas.height = this.env.height
+        this.ctx = this.canvas.getContext('2d')
+        this.loopFn = this.loopFn.bind(this)
+        this.beforeLoop()
+        this.loop()
+    }
 
+    loop() {
+        this.loopFn()
+        requestAnimationFrame(this.loop.bind(this))
     }
 }
 
